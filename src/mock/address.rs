@@ -8,9 +8,9 @@ use std::fs::File;
 use std::io::BufReader;
 
 pub const CN_ADDRESS_DATA: Lazy<Result<Address, Box<dyn Error>>> =
-    Lazy::new(|| Address::from_path("./src/data/cn_address.json", AddressType::Cn));
+    Lazy::new(|| Address::from_string(include_str!("../data/cn_address.json"), AddressType::Cn));
 pub const EN_ADDRESS_DATA: Lazy<Result<Address, Box<dyn Error>>> =
-    Lazy::new(|| Address::from_path("./src/data/en_address.json", AddressType::En));
+    Lazy::new(|| Address::from_string(include_str!("../data/en_address.json"), AddressType::En));
 
 #[derive(Debug, Default, Clone)]
 pub struct MockZipFn;
@@ -53,6 +53,15 @@ pub struct Address {
 }
 
 impl Address {
+    fn from_string(content: &str, r#type: AddressType) -> Result<Self, Box<dyn Error>> {
+        let mut v = serde_json::Deserializer::from_str(content);
+        let address_items = AddressItems::deserialize(&mut v)?;
+        Ok(Self {
+            r#type,
+            address_items,
+        })
+    }
+
     pub fn from_path(path: &str, r#type: AddressType) -> Result<Self, Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
